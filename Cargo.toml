@@ -1,5 +1,5 @@
 [package]
-name = "oxygenPS"
+name = "oxygen"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,3 +7,6 @@ edition = "2024"
 tokio = { version = "1.52.3", features = ["full"] }
 httparse = "1.8.0"
 
+config = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
