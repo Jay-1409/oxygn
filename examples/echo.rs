@@ -3,8 +3,8 @@ use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
-    let listener = TcpListener::bind("127.0.0.1:8000").await?;
-    println!("Echo server listening on 127.0.0.1:8000");
+    let listener = TcpListener::bind("127.0.0.1:8080").await?;
+    println!("Echo server listening on 127.0.0.1:8080");
     loop {
         let (mut socket, addr) = listener.accept().await?;
         println!("Accepted connection from: {}", addr);
