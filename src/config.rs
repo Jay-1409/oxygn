@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    pub backend: Backend,
+    pub backend: Vec<Backend>,
     pub limiting: Limiting,
     pub load_balancing: LoadBalancing,
 }
@@ -20,7 +20,12 @@ pub struct Limiting {
 
 #[derive(Debug, Deserialize)]
 pub struct LoadBalancing {
-    r#type: String,
+    #[serde(default = "default_strategy")]
+    pub strategy: String,
+}
+
+fn default_strategy() -> String {
+    "round_robin".to_string()
 }
 
 pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
@@ -40,7 +45,6 @@ pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     
     load_balancing:
         type:
-
 
 
 */

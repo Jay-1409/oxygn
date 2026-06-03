@@ -1,12 +1,14 @@
 backend:
-  backend_host: "127.0.0.1"
-  ports:
-    - 8080
-    - 8081
-    - 9090
+  - backend_host: "127.0.0.1"
+    ports:
+      - 8080
+      - 8081
+  - backend_host: "127.0.0.2"
+    ports:
+      - 9090
 
 limiting:
   rate: 100
 
 load_balancing:
-  type: "round_robin"
+  strategy: "round_robin"
