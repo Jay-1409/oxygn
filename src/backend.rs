@@ -15,6 +15,10 @@ pub struct Backend {
 }
 
 
+/**
+    A backend pool is an implementation of, structuring backends into a structure, capable of handing 
+    the worker threads requirnments for load balancing. 
+**/
 #[derive(Clone)]
 pub struct BackendPool {
     pub(crate) backends: Arc<RwLock<Vec<Backend>>>,
@@ -37,6 +41,11 @@ impl BackendPool {
         let strategy_type = &config.load_balancing.strategy;
         let strategy = crate::strategy::init(strategy_type);
         Self {
+            /**
+                A load balancer will have multiple threads reading the backend list constantly to route traffic.
+                However, if a server goes down, a thread needs to write to the list to mark it health: false. 
+                RwLock allows many threads to read at the exact same time, but safely blocks them if one thread needs to make an update.
+            **/
             backends: Arc::new(RwLock::new(backends)),
             strategy,
         }
