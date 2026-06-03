@@ -33,3 +33,22 @@ pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     let config: Config = serde_yaml::from_str(&yaml_str)?;
     Ok(config)
 }
+
+/*
+    Lets have the ymal structure to be like 
+    backend:
+    - backend_host: "127.0.0.1".    <-- multiple host machines can be configured, and on each machine multiple ports can be configured. 
+        ports:
+        - 8080
+        - 8081
+    - backend_host: "127.0.0.2" 
+        ports:
+        - 9090
+
+    limiting:   <--- optional feature, rate limiting [in scope]
+        rate: 100
+
+    load_balancing:
+        strategy: "round_robin" <--- user can pass in the load balancing strategy that they want to use
+
+*/
