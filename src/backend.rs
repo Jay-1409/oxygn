@@ -18,7 +18,7 @@ pub struct Backend {
 /**
     A backend pool is an implementation of, structuring backends into a structure, capable of handing 
     the worker threads requirnments for load balancing. 
-    
+
 **/
 #[derive(Clone)]
 pub struct BackendPool {
@@ -108,23 +108,47 @@ impl BackendPool {
             let mut ticker = tokio::time::interval(interval);
             loop {
                 ticker.tick().await;
-                let backends = pool_clone.backends.read().unwrap();
-                for backend in backends.iter() {
-                    if !backend.health {
-                        let addr = format!("{}:{}", backend.host, backend.port);
-                        let is_healthy = tokio::time::timeout(
-                            Duration::from_secs(1),
-                            tokio::net::TcpStream::connect(&addr)
-                        ).await.is_ok();
-                        if is_healthy {
-                            // Backend is back online
-                            let mut backends = pool_clone.backends.write().unwrap();
-                            for backend in backends.iter_mut() {
-                                if backend.host.eq(&backend.host) && backend.port == backend.port {
-                                    backend.health = true;
-                                    break;
-                                }
-                            }
+                let targets: Vec<(usize, String)> = {
+                    let backends = pool_clone.backends.read().unwrap();
+                    /*
+                        Here we are creating a vector of tuples, where each tuple contains the index of the backend in the pool,  
+                        and the address of the backend 
+
+                        We enumerate, which returns an iterator of `(index, element)` tuples,  
+                        then filter only the ones where health is false     
+
+                        it returns a target -> idx, host:port
+
+                        We collect them into a vector 
+
+
+                        OPTIMIZATION: 
+                            - probably pre allocation the space, -> lesser heap access -> lesser heap access overheads
+                    */
+                    backends
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, b)| !b.health)
+                        .map(|(idx, b)| (idx, format!("{}:{}", b.host, b.port)))
+                        .collect()
+                };
+                /*
+                    OPTIMIZATION / STRATEGY / CONFIG: 
+                        - For each unhealthy backemd in concurrent spawn the health check tasks 
+                                i.e ping them concurently instead of doing it one by one, 
+                        - this asks for a better implementation strategy, 
+                        - probably put this into an interface, and let the user decide in the configurations what
+                                strategy they wish to use
+                */
+                for (idx, addr) in targets {
+                    let is_healthy = tokio::time::timeout(
+                        Duration::from_secs(1),
+                        tokio::net::TcpStream::connect(&addr)
+                    ).await.is_ok();
+                    if is_healthy {
+                        let mut backends = pool_clone.backends.write().unwrap();
+                        if idx < backends.len() {
+                            backends[idx].health = true;
                             println!("Backend {} is back online", addr);
                         }
                     }
