@@ -139,6 +139,10 @@ impl BackendPool {
                         - this asks for a better implementation strategy, 
                         - probably put this into an interface, and let the user decide in the configurations what
                                 strategy they wish to use
+
+
+                    EDGE CASES: 
+                        - if we allow dynamically changing configurations in runtime, this the below will fail
                 */
                 for (idx, addr) in targets {
                     let is_healthy = tokio::time::timeout(
