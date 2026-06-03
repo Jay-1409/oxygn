@@ -1,0 +1,10 @@
+[package]
+name = "oxygen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+types = { path = "../types" }
+managers = { path = "../managers" }
+proxy = { path = "../proxy" }
+tokio = { version = "1.52.3", features = ["full"] }

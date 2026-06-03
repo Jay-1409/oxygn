@@ -1,9 +1,9 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use crate::backend::{Backend, BackendPool}; 
+use types::Backend;
 
 pub trait RoutingStrategy: Send + Sync {
-    fn next(&self, pool: &BackendPool) -> Option<Backend>;
+    fn next(&self, backends: &[Backend]) -> Option<Backend>;
 }
 
 pub fn init(name: &str) -> Arc<dyn RoutingStrategy> {
@@ -25,13 +25,8 @@ impl RoundRobin {
     }
 }
 
-/**
-    Reads the backend pool and picks the next backend based on the strategy used.
-    
-**/
 impl RoutingStrategy for RoundRobin {
-    fn next(&self, pool: &BackendPool) -> Option<Backend> {
-        let backends = pool.backends.read().unwrap();
+    fn next(&self, backends: &[Backend]) -> Option<Backend> {
         let len = backends.len();
         if len == 0 {
             return None;

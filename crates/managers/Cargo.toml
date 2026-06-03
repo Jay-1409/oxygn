@@ -1,0 +1,9 @@
+[package]
+name = "managers"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+types = { path = "../types" }
+strategies = { path = "../strategies" }
+tokio = { version = "1.52.3", features = ["full"] }
