@@ -25,6 +25,10 @@ impl RoundRobin {
     }
 }
 
+/**
+    Reads the backend pool and picks the next backend based on the strategy used.
+    
+**/
 impl RoutingStrategy for RoundRobin {
     fn next(&self, pool: &BackendPool) -> Option<Backend> {
         let backends = pool.backends.read().unwrap();
