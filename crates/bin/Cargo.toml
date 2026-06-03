@@ -6,5 +6,5 @@ edition = "2024"
 [dependencies]
 types = { path = "../types" }
 managers = { path = "../managers" }
-proxy = { path = "../proxy" }
+network = { path = "../network" }
 tokio = { version = "1.52.3", features = ["full"] }

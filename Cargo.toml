@@ -3,7 +3,7 @@ members = [
     "crates/types",
     "crates/strategies",
     "crates/managers",
-    "crates/proxy",
+    "crates/network",
     "crates/bin",
 ]
 resolver = "2"
