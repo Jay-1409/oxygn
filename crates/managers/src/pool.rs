@@ -3,6 +3,7 @@ use std::time::Duration;
 use types::Backend;
 use types::config::Config;
 use strategies::routing::{self, RoutingStrategy};
+use strategies::limiting::{LimitingStrategy, LimitingStrategyFactory};
 
 /**
     A backend pool is an implementation of, structuring backends into a structure, capable of handing 
@@ -13,6 +14,8 @@ use strategies::routing::{self, RoutingStrategy};
 pub struct BackendPool {
     pub(crate) backends: Arc<RwLock<Vec<Backend>>>,
     strategy: Arc<dyn RoutingStrategy>,
+    rate_limiter: Arc<dyn LimitingStrategy>,
+    limit_rate: u32,
 }
 
 impl BackendPool {
@@ -30,6 +33,12 @@ impl BackendPool {
         }
         let strategy_type = &config.load_balancing.strategy;
         let strategy = routing::init(strategy_type);
+        // Initialize the rate limiter with the configured window duration
+        let rate_limiter = LimitingStrategyFactory::init(
+            &config.limiting.strategy,
+            Duration::from_secs(config.limiting.window_secs),
+        );
+        let limit_rate = config.limiting.rate;
         Self {
             /*
                 A load balancer will have multiple threads reading the backend list constantly to route traffic.
@@ -38,6 +47,8 @@ impl BackendPool {
             */
             backends: Arc::new(RwLock::new(backends)),
             strategy,
+            rate_limiter,
+            limit_rate,
         }
     }
 
@@ -168,5 +179,12 @@ impl BackendPool {
                 }
             }
         });
+    }
+
+    /**
+        Checks if a client's IP is allowed by the rate limiter.
+    **/
+    pub fn check_rate_limit(&self, ip: &str) -> bool {
+        self.rate_limiter.check_limit(ip, self.limit_rate)
     }
 }
