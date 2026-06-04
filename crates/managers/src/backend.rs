@@ -140,10 +140,13 @@ impl BackendPool {
                         - if we allow dynamically changing configurations in runtime, this the below will fail
                 */
                 for (idx, addr) in targets {
-                    let is_healthy = tokio::time::timeout(
-                        Duration::from_secs(1),
-                        tokio::net::TcpStream::connect(&addr)
-                    ).await.is_ok();
+                    let is_healthy = matches!(
+                        tokio::time::timeout(
+                            Duration::from_secs(1),
+                            tokio::net::TcpStream::connect(&addr)
+                        ).await,
+                        Ok(Ok(_))
+                    );
                     if is_healthy {
                         let mut backends = pool_clone.backends.write().unwrap();
                         if idx < backends.len() {
