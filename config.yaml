@@ -1,18 +1,15 @@
 backend:
   - backend_host: "127.0.0.1"
     ports:
-      - 18080
-      - 18081
+      - 8080
+      - 8081
 
 limiting:
-  rate: 100
+  strategy: "moka_counter"
+  rate: 2
 
 load_balancing:
   strategy: "round_robin"
 
 oxygen:
   port: 8000
-
-
-
-  

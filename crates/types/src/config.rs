@@ -21,13 +21,25 @@ pub struct BackendConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Limiting {
+    #[serde(default = "default_limiting_strategy")]
+    pub strategy: String,
     pub rate: u32,
+    #[serde(default = "default_window_secs")]
+    pub window_secs: u64,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct LoadBalancing {
     #[serde(default = "default_strategy")]
     pub strategy: String,
+}
+
+fn default_limiting_strategy() -> String {
+    "no_limiting".to_string()
+}
+
+fn default_window_secs() -> u64 {
+    1
 }
 
 fn default_strategy() -> String {
@@ -52,6 +64,7 @@ pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
         - 9090
 
     limiting:   <--- optional feature, rate limiting [in scope]
+        strategy:           <---- choose from multiple rate limiting strategies, by defeult no rate limmiting is done
         rate: 100
 
     load_balancing:
