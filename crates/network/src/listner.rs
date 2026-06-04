@@ -18,7 +18,7 @@ use managers::backend::BackendPool;
         - WebSockets: Supported out of the box! Since copy_bidirectional keeps the tunnel open as long as both sides want, WebSocket connections stay open and work perfectly.
         - Databases: You can proxy database connections like Postgres, MySQL, Redis, and MongoDB.
         - gRPC: Modern API protocol running over HTTP/2.
-        - SSH (Secure Shell) / SFTP (Secure File Transfer Protocol) / FTP (File Transfer Protocol): Secure shell and file transfer protocols.
+        - SSH (Secure Shell (i epnder who wpuld use a rps for this ?? lol)) / SFTP (Secure File Transfer Protocol) / FTP (File Transfer Protocol): Secure shell and file transfer protocols.
         - Email (SMTP, IMAP): Mail protocols.
 
     CONS:

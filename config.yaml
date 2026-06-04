@@ -3,9 +3,6 @@ backend:
     ports:
       - 8080
       - 8081
-  - backend_host: "127.0.0.2"
-    ports:
-      - 9090
 
 limiting:
   rate: 100
