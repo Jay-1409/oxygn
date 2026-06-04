@@ -56,6 +56,13 @@ impl Listener {
             let (mut client_stream, client_addr) = listener.accept().await?;
             let pool = self.pool.clone();
             tokio::spawn(async move {
+                let client_ip = client_addr.ip().to_string();
+                if !pool.check_rate_limit(&client_ip) {
+                    eprintln!("Rate limit exceeded for client {}", client_addr);
+                    crate::responses::send_429(&mut client_stream).await;
+                    return;
+                }
+
                 let backend_addr = match pool.next_backend() {
                     Some(addr) => addr,
                     None => {

@@ -15,3 +15,14 @@ pub async fn send_503(stream: &mut TcpStream) {
                      Service Unavailable";
     let _ = stream.write_all(response).await;
 }
+
+/// Sends a 429 Too Many Requests HTTP response to the client stream.
+pub async fn send_429(stream: &mut TcpStream) {
+    let response = b"HTTP/1.1 429 Too Many Requests\r\n\
+                     Content-Type: text/plain\r\n\
+                     Content-Length: 17\r\n\
+                     Connection: close\r\n\
+                     \r\n\
+                     Too Many Requests";
+    let _ = stream.write_all(response).await;
+}
