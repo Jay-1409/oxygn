@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 types = { path = "../types" }
+mini-moka = "0.10"
