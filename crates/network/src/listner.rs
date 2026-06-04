@@ -58,6 +58,7 @@ impl Listener {
                     Some(addr) => addr,
                     None => {
                         eprintln!("Error: No healthy backends available for client {}", client_addr);
+                        crate::responses::send_503(&mut client_stream).await;
                         return; 
                     }
                 };
