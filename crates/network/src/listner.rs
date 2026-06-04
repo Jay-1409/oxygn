@@ -2,6 +2,8 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::io;
 use managers::pool::BackendPool;
 
+/// TODO: Refactor listner to listener
+
 /**
     This struct implements the listner functionality, which is to listen for incoming 
     connection on a specified port. 
