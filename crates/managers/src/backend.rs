@@ -80,6 +80,17 @@ impl BackendPool {
     }
 
     /**
+        Marks the backend unhealthy by its address string (e.g. "127.0.0.1:8080")
+    **/
+    pub fn mark_unhealthy_by_addr(&self, addr: &str) {
+        if let Some((host, port_str)) = addr.split_once(':') {
+            if let Ok(port) = port_str.parse::<u16>() {
+                self.mark_unhealthy(host, port);
+            }
+        }
+    }
+
+    /**
         This function spawn a tokio process on a different thread, which will pool through the services,  
         and if the backend is in-active, it will try to ping it and if it responds, it will mark it as healthy, 
         otherwise it will keep it inactive.

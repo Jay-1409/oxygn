@@ -1,4 +1,3 @@
-use std::time::Duration;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io;
 use managers::backend::BackendPool;
@@ -25,6 +24,12 @@ impl Listener {
         let addr = format!("0.0.0.0:{}", self.port);
         let listener = TcpListener::bind(&addr).await?;
         println!("Oxygen is listening on {}", addr);
+        /* 
+            Exactly here we delegate any incomming connections to a seperate thread, using tokio spawn, 
+            which runs the process in a seperate thread. 
+
+
+        */  
         loop {
             let (mut client_stream, client_addr) = listener.accept().await?;
             let pool = self.pool.clone();
@@ -40,12 +45,12 @@ impl Listener {
                 let mut backend_stream = match TcpStream::connect(&backend_addr).await {
                     Ok(stream) => stream,
                     Err(e) => {
+                        /* 
+                            it is possible that a backend went unhealthy after it was allocated, in that case, it is to be marked unhealthy. 
+                            we delegate it to the backend pool manager. 
+                        */
                         eprintln!("Failed to connect to backend {}: {}", backend_addr, e);
-                        if let Some((host, port_str)) = backend_addr.split_once(':') {
-                            if let Ok(port) = port_str.parse::<u16>() {
-                                pool.mark_unhealthy(host, port);
-                            }
-                        }
+                        pool.mark_unhealthy_by_addr(&backend_addr);
                         return;
                     }
                 };
