@@ -1,5 +1,5 @@
 use types::config;
-use managers::backend::BackendPool;
+use managers::pool::BackendPool;
 use network::listner::Listener;
 use std::time::Duration;
 

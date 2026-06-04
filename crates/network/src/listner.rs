@@ -1,6 +1,6 @@
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io;
-use managers::backend::BackendPool;
+use managers::pool::BackendPool;
 
 /**
     This struct implements the listner functionality, which is to listen for incoming 
