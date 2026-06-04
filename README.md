@@ -1,6 +1,9 @@
 # Oxygen
-Let your servers breath, let your clients breath, All via a simple configuration file
 
-Introducing Oxygen, A light weight, high performance single binary Reverse proxy server
---
+<p align="center">
+  <img src="assets/logo.svg" alt="Oxygen Logo" width="200" />
+</p>
 
+Let your servers breathe, let your clients breathe, all via a simple configuration file.
+
+Introducing Oxygen, a lightweight, high-performance single-binary reverse proxy server.
