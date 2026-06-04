@@ -12,3 +12,6 @@ limiting:
 
 load_balancing:
   strategy: "round_robin"
+
+oxygen:
+  port: 8000

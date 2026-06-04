@@ -5,6 +5,12 @@ pub struct Config {
     pub backend: Vec<BackendConfig>,
     pub limiting: Limiting,
     pub load_balancing: LoadBalancing,
+    pub oxygen: Oxygen,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Oxygen {
+    pub port: u16
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -51,4 +57,6 @@ pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     load_balancing:
         strategy: "round_robin" <--- user can pass in the load balancing strategy that they want to use
 
+    oxygen:
+        port: 8000    <---- this is the port on which oxygen runs on the host machine
 */
