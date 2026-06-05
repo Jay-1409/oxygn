@@ -151,7 +151,6 @@ impl BackendPool {
                         // Acquire a permit before making the network call.
                         // If 100 checks are already running, this will pause here until one finishes.
                         let _permit = permit_bucket.acquire().await.unwrap();
-
                         let is_healthy = match check_type.as_str() {
                             "http" => {
                                 match tokio::time::timeout(Duration::from_secs(1), async {
@@ -174,7 +173,6 @@ impl BackendPool {
                                     )
                                     .await?;
                                     let response_str = String::from_utf8_lossy(&response_buf[..n]);
-
                                     if let Some(status_line) = response_str.lines().next() {
                                         let parts: Vec<&str> =
                                             status_line.split_whitespace().collect();
