@@ -103,45 +103,24 @@ impl BackendPool {
     }
 
     /*
-        This function spawn a tokio process on a different thread, which will pool through the services,  
-        and if the backend is in-active, it will try to ping it and if it responds, it will mark it as healthy, 
-        otherwise it will keep it inactive.
-        
-        in a production environment, i believe that the best way to check the health of a backend is to see if it responds to health check 
-        endpoints.  
-
-
-        Its entire job is to sit in the background, wake up every few seconds (the interval),
-        look for any servers that were previously marked dead (health: false),
-        and check if they've come back to life. If a server responds, 
-        it flips its health status back to true.  ---> This would again be an blocking call --> performance drops here 
-
-        A better implementation would again be a non blocking call, but i have no idea how we can implement that? 
-
+        This function spawns a background task that periodically checks the health of inactive backends.
+        It runs checks concurrently using `tokio::task::JoinSet` and throttles concurrent connection attempts
+        to a maximum of 100 using a `tokio::sync::Semaphore`. It supports both raw TCP ping checks and HTTP GET checks.
     */
-    pub fn spawn_health_pooler(&self, interval: Duration) {
+    pub fn spawn_health_pooler(&self, config: &types::config::HealthCheck) {
         let pool_clone = self.clone();
+        let interval = Duration::from_secs(config.interval_secs);
+        let check_type = config.check_type.clone();
+        let path = config.path.clone();
+
         tokio::spawn(async move {
             let mut ticker = tokio::time::interval(interval);
+            let permit_bucket = Arc::new(tokio::sync::Semaphore::new(100));
+
             loop {
                 ticker.tick().await;
                 let targets: Vec<(usize, String)> = {
                     let backends = pool_clone.backends.read().unwrap();
-                    /*
-                        Here we are creating a vector of tuples, where each tuple contains the index of the backend in the pool,  
-                        and the address of the backend 
-
-                        We enumerate, which returns an iterator of `(index, element)` tuples,  
-                        then filter only the ones where health is false     
-
-                        it returns a target -> idx, host:port
-
-                        We collect them into a vector 
-
-
-                        OPTIMIZATION: 
-                            - probably pre allocation the space, -> lesser heap access -> lesser heap access overheads
-                    */
                     backends
                         .iter()
                         .enumerate()
@@ -150,31 +129,87 @@ impl BackendPool {
                         .collect()
                 };
 
-                /*
-                    OPTIMIZATION / STRATEGY / CONFIG: 
-                        - For each unhealthy backemd in concurrent spawn the health check tasks 
-                                i.e ping them concurently instead of doing it one by one, 
-                        - this asks for a better implementation strategy, 
-                        - probably put this into an interface, and let the user decide in the configurations what
-                                strategy they wish to use
+                if targets.is_empty() {
+                    continue;
+                }
 
+                let mut set = tokio::task::JoinSet::new();
 
-                    EDGE CASES: 
-                        - if we allow dynamically changing configurations in runtime, this the below will fail
-                */
                 for (idx, addr) in targets {
-                    let is_healthy = matches!(
-                        tokio::time::timeout(
-                            Duration::from_secs(1),
-                            tokio::net::TcpStream::connect(&addr)
-                        ).await,
-                        Ok(Ok(_))
-                    );
-                    if is_healthy {
-                        let mut backends = pool_clone.backends.write().unwrap();
-                        if idx < backends.len() {
-                            backends[idx].health = true;
-                            println!("Backend {} is back online", addr);
+                    let permit_bucket = permit_bucket.clone();
+                    let check_type = check_type.clone();
+                    let path = path.clone();
+
+                    set.spawn(async move {
+                        // Acquire a permit before making the network call.
+                        // If 100 checks are already running, this will pause here until one finishes.
+                        let _permit = permit_bucket.acquire().await.unwrap();
+
+                        let is_healthy = match check_type.as_str() {
+                            "http" => {
+                                match tokio::time::timeout(
+                                    Duration::from_secs(1),
+                                    async {
+                                        let mut stream = tokio::net::TcpStream::connect(&addr).await?;
+                                        let request = format!(
+                                            "GET {} HTTP/1.1\r\n\
+                                             Host: {}\r\n\
+                                             Connection: close\r\n\r\n",
+                                            path, addr
+                                        );
+                                        tokio::io::AsyncWriteExt::write_all(&mut stream, request.as_bytes()).await?;
+                                        let mut response_buf = [0u8; 1024];
+                                        let n = tokio::io::AsyncReadExt::read(&mut stream, &mut response_buf).await?;
+                                        let response_str = String::from_utf8_lossy(&response_buf[..n]);
+
+                                        if let Some(status_line) = response_str.lines().next() {
+                                            let parts: Vec<&str> = status_line.split_whitespace().collect();
+                                            if parts.len() >= 2 && (parts[0].starts_with("HTTP/1.1") || parts[0].starts_with("HTTP/1.0")) {
+                                                if let Ok(status_code) = parts[1].parse::<u16>() {
+                                                    Ok::<bool, std::io::Error>(status_code >= 200 && status_code < 400)
+                                                } else {
+                                                    Ok::<bool, std::io::Error>(false)
+                                                }
+                                            } else {
+                                                Ok::<bool, std::io::Error>(false)
+                                            }
+                                        } else {
+                                            Ok::<bool, std::io::Error>(false)
+                                        }
+                                    }
+                                ).await {
+                                    Ok(Ok(healthy)) => healthy,
+                                    _ => false,
+                                }
+                            }
+                            _ => {
+                                // Default "tcp" check
+                                matches!(
+                                    tokio::time::timeout(
+                                        Duration::from_secs(1),
+                                        tokio::net::TcpStream::connect(&addr)
+                                    ).await,
+                                    Ok(Ok(_))
+                                )
+                            }
+                        };
+
+                        // The permit is automatically returned to the bucket when `_permit` goes out of scope.
+                        (idx, addr, is_healthy)
+                    });
+                }
+
+                // Process the results as they finish
+                while let Some(res) = set.join_next().await {
+                    if let Ok((idx, addr, is_healthy)) = res {
+                        if is_healthy {
+                            let mut backends = pool_clone.backends.write().unwrap();
+                            if idx < backends.len() {
+                                if !backends[idx].health {
+                                    backends[idx].health = true;
+                                    println!("Backend {} is back online", addr);
+                                }
+                            }
                         }
                     }
                 }

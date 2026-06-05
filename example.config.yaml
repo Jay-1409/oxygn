@@ -35,6 +35,20 @@ limiting:
   # This strictly bounds the RAM footprint of the proxy.
   memory_budget_mb: 50
 
+# 3.5. Health Checking configuration
+health_check:
+  # The interval in seconds at which the background task polls unhealthy servers to check if they are back online
+  interval_secs: 2
+
+  # The check strategy.
+  # Available options:
+  #   - "tcp": Pings the backend by opening a TCP connection. (Low overhead)
+  #   - "http": Sends a raw HTTP GET request to the target path and verifies a successful response (status code 200-399).
+  check_type: "tcp"
+
+  # The endpoint path used only if check_type is "http".
+  path: "/health"
+
 # 4. Backend Pool configuration
 # You can list multiple physical backend host machines, and specify multiple ports for each host.
 # Oxygen will automatically balance traffic across all host/port combinations.

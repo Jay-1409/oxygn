@@ -6,6 +6,8 @@ pub struct Config {
     pub limiting: Limiting,
     pub load_balancing: LoadBalancing,
     pub oxygen: Oxygen,
+    #[serde(default)]
+    pub health_check: HealthCheck,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -35,7 +37,7 @@ pub struct LoadBalancing {
     #[serde(default = "default_strategy")]
     pub strategy: String,
 }
-
+// TODO: Move the defaults to a new defaults.rs
 fn default_limiting_strategy() -> String {
     "no_limiting".to_string()
 }
@@ -50,6 +52,38 @@ fn default_memory_budget_mb() -> u64 {
 
 fn default_strategy() -> String {
     "round_robin".to_string()
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct HealthCheck {
+    #[serde(default = "default_health_check_interval_secs")]
+    pub interval_secs: u64,
+    #[serde(default = "default_health_check_type")]
+    pub check_type: String,
+    #[serde(default = "default_health_check_path")]
+    pub path: String,
+}
+
+impl Default for HealthCheck {
+    fn default() -> Self {
+        Self {
+            interval_secs: default_health_check_interval_secs(),
+            check_type: default_health_check_type(),
+            path: default_health_check_path(),
+        }
+    }
+}
+
+fn default_health_check_interval_secs() -> u64 {
+    2
+}
+
+fn default_health_check_type() -> String {
+    "tcp".to_string()
+}
+
+fn default_health_check_path() -> String {
+    "/health".to_string()
 }
 
 pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {

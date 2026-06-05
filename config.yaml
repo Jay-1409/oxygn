@@ -13,3 +13,8 @@ load_balancing:
 
 oxygen:
   port: 8000
+
+health_check:
+  interval_secs: 2
+  check_type: "http"
+  path: "/"
