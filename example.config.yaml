@@ -1,0 +1,53 @@
+# Oxygen Reverse Proxy Example Configuration File
+# ------------------------------------------------
+# Customize this file to configure backend servers, rate limiting, 
+# load balancing strategies, and the port on which Oxygen will listen.
+
+# 1. Oxygen server configuration
+oxygen:
+  # The port on which the Oxygen proxy will run and listen for client requests
+  port: 8000
+
+# 2. Load Balancing configuration
+load_balancing:
+  # The strategy to route traffic between healthy backend servers.
+  # Available options:
+  #   - "round_robin": Alternates requests sequentially between the healthy ports/backends.
+  strategy: "round_robin"
+
+# 3. Rate Limiting configuration
+limiting:
+  # The strategy used to enforce rate limits.
+  # Available options:
+  #   - "no_limiting": Disables rate limiting completely (default fallback).
+  #   - "moka_counter": Fast, thread-safe, memory-budget-aware fixed window counter using an in-memory concurrent cache. (Highly Recommended)
+  #   - "basic_counter": Simple Mutex + HashMap fixed window counter (blocks thread execution, not recommended for high concurrency).
+  strategy: "moka_counter"
+
+  # The maximum number of requests a single client IP can make within the window
+  rate: 100
+
+  # The length of the rate limiting time window in seconds
+  window_secs: 60
+
+  # The memory budget in megabytes (MB) allowed for the cache (only applies to "moka_counter").
+  # This determines the cache's maximum entry capacity by calculating (budget * 1024 * 1024) / 120 bytes per entry.
+  # This strictly bounds the RAM footprint of the proxy.
+  memory_budget_mb: 50
+
+# 4. Backend Pool configuration
+# You can list multiple physical backend host machines, and specify multiple ports for each host.
+# Oxygen will automatically balance traffic across all host/port combinations.
+backend:
+  # First backend group
+  - backend_host: "127.0.0.1"
+    ports:
+      - 8080
+      - 8081
+      - 8082
+  
+  # Second backend group (uncomment and configure if routing across different hosts)
+  # - backend_host: "192.168.1.100"
+  #   ports:
+  #     - 9000
+  #     - 9001
