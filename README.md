@@ -36,20 +36,43 @@ Ensure you have the Rust toolchain installed.
 
 ### Installation
 
+**Option 1: Using Cargo (Recommended)**
+If you have the Rust toolchain installed, you can install Oxygen directly from crates.io:
+```bash
+cargo install oxygn
+```
+*(Note: The package name is `oxygn`, but the binary installed is `oxygen`)*
+
+**Option 2: Build from Source**
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/Jay-1409/oxygen.git
    cd oxygen
    ```
 
-2. **Configure your Proxy**:
-   Copy the example configuration to your working configuration file:
+2. **Build**:
    ```bash
+   cargo build --release
+   ```
+
+### Running Oxygen
+
+1. **Configure your Proxy**:
+   Oxygen requires a `config.yaml` file in the directory where you execute it. 
+   ```bash
+   # If you installed via cargo, download the example config:
+   curl -o config.yaml https://raw.githubusercontent.com/Jay-1409/oxygen/main/example.config.yaml
+   
+   # Or if you cloned the repository:
    cp example.config.yaml config.yaml
    ```
 
-3. **Build and Run**:
+2. **Start the Proxy**:
    ```bash
+   # If you installed via cargo:
+   oxygen
+   
+   # If running from source:
    cargo run --release
    ```
 
