@@ -1,9 +1,13 @@
-[workspace]
-members = [
-    "crates/types",
-    "crates/strategies",
-    "crates/managers",
-    "crates/network",
-    "crates/bin",
-]
-resolver = "2"
+[package]
+name = "oxygen"
+version = "0.1.0"
+edition = "2024"
+description = "A lightweight, high-performance single-binary reverse proxy server."
+repository = "https://github.com/Jay-1409/oxygen"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
+mini-moka = "0.10"
+tokio = { version = "1.52.3", features = ["full"] }

@@ -1,9 +1,9 @@
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
-use strategies::limiting::{LimitingStrategy, LimitingStrategyFactory};
-use strategies::routing::{self, RoutingStrategy};
-use types::Backend;
-use types::config::Config;
+use crate::strategies::limiting::{LimitingStrategy, LimitingStrategyFactory};
+use crate::strategies::routing::{self, RoutingStrategy};
+use crate::types::Backend;
+use crate::types::config::Config;
 
 /*
     A backend pool is an implementation of, structuring backends into a structure, capable of handing
@@ -114,7 +114,7 @@ impl BackendPool {
             - Helps us get closer to Single responsibilty principlesgi
 
     */
-    pub fn spawn_health_pooler(&self, config: &types::config::HealthCheck) {
+    pub fn spawn_health_pooler(&self, config: &crate::types::config::HealthCheck) {
         let pool_clone = self.clone();
         let interval = Duration::from_secs(config.interval_secs);
         let check_type = config.check_type.clone();

@@ -1,6 +1,6 @@
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io;
-use managers::pool::BackendPool;
+use crate::managers::pool::BackendPool;
 
 /// TODO: Refactor listner to listener
 
@@ -59,7 +59,7 @@ impl Listener {
                 let client_ip = client_addr.ip().to_string();
                 if !pool.check_rate_limit(&client_ip) {
                     eprintln!("Rate limit exceeded for client {}", client_addr);
-                    crate::responses::send_429(&mut client_stream).await;
+                    crate::network::responses::send_429(&mut client_stream).await;
                     return;
                 }
 
@@ -67,7 +67,7 @@ impl Listener {
                     Some(addr) => addr,
                     None => {
                         eprintln!("Error: No healthy backends available for client {}", client_addr);
-                        crate::responses::send_503(&mut client_stream).await;
+                        crate::network::responses::send_503(&mut client_stream).await;
                         return; 
                     }
                 };

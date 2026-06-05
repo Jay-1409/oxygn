@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use types::Backend;
+use crate::types::Backend;
 
 pub trait RoutingStrategy: Send + Sync {
     fn next(&self, backends: &[Backend]) -> Option<Backend>;

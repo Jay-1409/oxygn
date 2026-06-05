@@ -1,8 +1,0 @@
-[package]
-name = "network"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-managers = { path = "../managers" }
-tokio = { version = "1.52.3", features = ["full"] }
