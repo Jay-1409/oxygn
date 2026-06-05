@@ -26,6 +26,8 @@ pub struct Limiting {
     pub rate: u32,
     #[serde(default = "default_window_secs")]
     pub window_secs: u64,
+    #[serde(default = "default_memory_budget_mb")]
+    pub memory_budget_mb: u64,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -40,6 +42,10 @@ fn default_limiting_strategy() -> String {
 
 fn default_window_secs() -> u64 {
     1
+}
+
+fn default_memory_budget_mb() -> u64 {
+    100
 }
 
 fn default_strategy() -> String {

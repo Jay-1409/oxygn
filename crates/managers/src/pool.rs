@@ -5,11 +5,11 @@ use types::config::Config;
 use strategies::routing::{self, RoutingStrategy};
 use strategies::limiting::{LimitingStrategy, LimitingStrategyFactory};
 
-/**
+/*
     A backend pool is an implementation of, structuring backends into a structure, capable of handing 
     the worker threads requirnments for load balancing. 
 
-**/
+*/
 #[derive(Clone)]
 pub struct BackendPool {
     pub(crate) backends: Arc<RwLock<Vec<Backend>>>,
@@ -33,10 +33,11 @@ impl BackendPool {
         }
         let strategy_type = &config.load_balancing.strategy;
         let strategy = routing::init(strategy_type);
-        // Initialize the rate limiter with the configured window duration
+        // Initialize the rate limiter with the configured window duration and memory budget
         let rate_limiter = LimitingStrategyFactory::init(
             &config.limiting.strategy,
             Duration::from_secs(config.limiting.window_secs),
+            config.limiting.memory_budget_mb,
         );
         let limit_rate = config.limiting.rate;
         Self {
@@ -52,10 +53,10 @@ impl BackendPool {
         }
     }
 
-    /**
+    /*
         Implements the stategy of next backedn choice, according to the startegy used, in runtine, 
         essentially delegates this task to startgy.rs
-    **/
+    */
     pub fn next_backend(&self) -> Option<String> {
         let backends = self.backends.read().unwrap();
         if let Some(backend) = self.strategy.next(&backends) {
@@ -65,9 +66,9 @@ impl BackendPool {
         }
     }
 
-    /**
+    /*
         Marks the backend in questionm kicks out of the active backend pool
-    **/
+    */
     pub fn mark_unhealthy(&self, host: &str, port: u16) {
         let mut backends = self.backends.write().unwrap();
         /*
@@ -90,9 +91,9 @@ impl BackendPool {
         }
     }
 
-    /**
+    /*
         Marks the backend unhealthy by its address string (e.g. "127.0.0.1:8080")
-    **/
+    */
     pub fn mark_unhealthy_by_addr(&self, addr: &str) {
         if let Some((host, port_str)) = addr.split_once(':') {
             if let Ok(port) = port_str.parse::<u16>() {
@@ -101,7 +102,7 @@ impl BackendPool {
         }
     }
 
-    /**
+    /*
         This function spawn a tokio process on a different thread, which will pool through the services,  
         and if the backend is in-active, it will try to ping it and if it responds, it will mark it as healthy, 
         otherwise it will keep it inactive.
@@ -117,7 +118,7 @@ impl BackendPool {
 
         A better implementation would again be a non blocking call, but i have no idea how we can implement that? 
 
-    **/
+    */
     pub fn spawn_health_pooler(&self, interval: Duration) {
         let pool_clone = self.clone();
         tokio::spawn(async move {
@@ -181,9 +182,9 @@ impl BackendPool {
         });
     }
 
-    /**
+    /*
         Checks if a client's IP is allowed by the rate limiter.
-    **/
+    */
     pub fn check_rate_limit(&self, ip: &str) -> bool {
         self.rate_limiter.check_limit(ip, self.limit_rate)
     }
