@@ -4,7 +4,7 @@ use managers::pool::BackendPool;
 
 /// TODO: Refactor listner to listener
 
-/**
+/*
     This struct implements the listner functionality, which is to listen for incoming 
     connection on a specified port. 
 
@@ -32,7 +32,7 @@ use managers::pool::BackendPool;
             - SSL Termination: The proxy cannot decrypt the SSL certificates. Decryption must happen at the backend.
             - Sticky Sessions / Cookie-based routing: You cannot route a user back to the same backend based on their session cookie.
 
-**/  
+*/  
 pub struct Listener {
     port: u16,
     pool: BackendPool,
