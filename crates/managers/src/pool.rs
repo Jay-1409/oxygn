@@ -1,13 +1,13 @@
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
+use strategies::limiting::{LimitingStrategy, LimitingStrategyFactory};
+use strategies::routing::{self, RoutingStrategy};
 use types::Backend;
 use types::config::Config;
-use strategies::routing::{self, RoutingStrategy};
-use strategies::limiting::{LimitingStrategy, LimitingStrategyFactory};
 
 /*
-    A backend pool is an implementation of, structuring backends into a structure, capable of handing 
-    the worker threads requirnments for load balancing. 
+    A backend pool is an implementation of, structuring backends into a structure, capable of handing
+    the worker threads requirnments for load balancing.
 
 */
 #[derive(Clone)]
@@ -43,7 +43,7 @@ impl BackendPool {
         Self {
             /*
                 A load balancer will have multiple threads reading the backend list constantly to route traffic.
-                However, if a server goes down, a thread needs to write to the list to mark it health: false. 
+                However, if a server goes down, a thread needs to write to the list to mark it health: false.
                 RwLock allows many threads to read at the exact same time, but safely blocks them if one thread needs to make an update.
             */
             backends: Arc::new(RwLock::new(backends)),
@@ -54,7 +54,7 @@ impl BackendPool {
     }
 
     /*
-        Implements the stategy of next backedn choice, according to the startegy used, in runtine, 
+        Implements the stategy of next backedn choice, according to the startegy used, in runtine,
         essentially delegates this task to startgy.rs
     */
     pub fn next_backend(&self) -> Option<String> {
@@ -72,16 +72,16 @@ impl BackendPool {
     pub fn mark_unhealthy(&self, host: &str, port: u16) {
         let mut backends = self.backends.write().unwrap();
         /*
-            We iterate over the list of backends that we have, and mark the backend in Question as inactive, 
+            We iterate over the list of backends that we have, and mark the backend in Question as inactive,
             not the most effective one, but how many backends can be running ona nignix server,
             i think ideally cannot be more than a 1000 or 10000
-            
-            although the incomming traffic will be blocked for that much time, 
-            should have a buffer mechanism for that. 
+
+            although the incomming traffic will be blocked for that much time,
+            should have a buffer mechanism for that.
 
             FUTURE SCOPE:
                 - impelement this method in a way that is non blocking
-                - While it becomes non blocking it should not end up being deadlock friendly. 
+                - While it becomes non blocking it should not end up being deadlock friendly.
         */
         for backend in backends.iter_mut() {
             if backend.host.eq(host) && backend.port == port {
@@ -106,6 +106,13 @@ impl BackendPool {
         This function spawns a background task that periodically checks the health of inactive backends.
         It runs checks concurrently using `tokio::task::JoinSet` and throttles concurrent connection attempts
         to a maximum of 100 using a `tokio::sync::Semaphore`. It supports both raw TCP ping checks and HTTP GET checks.
+
+        TODO: They method that is used for checking the health based on different type of selection of type, can be moved
+        into a strategy, and seperated from this.
+            - Makes it easier to update
+            - seperation of concern
+            - Helps us get closer to Single responsibilty principlesgi
+
     */
     pub fn spawn_health_pooler(&self, config: &types::config::HealthCheck) {
         let pool_clone = self.clone();
@@ -147,37 +154,50 @@ impl BackendPool {
 
                         let is_healthy = match check_type.as_str() {
                             "http" => {
-                                match tokio::time::timeout(
-                                    Duration::from_secs(1),
-                                    async {
-                                        let mut stream = tokio::net::TcpStream::connect(&addr).await?;
-                                        let request = format!(
-                                            "GET {} HTTP/1.1\r\n\
+                                match tokio::time::timeout(Duration::from_secs(1), async {
+                                    let mut stream = tokio::net::TcpStream::connect(&addr).await?;
+                                    let request = format!(
+                                        "GET {} HTTP/1.1\r\n\
                                              Host: {}\r\n\
                                              Connection: close\r\n\r\n",
-                                            path, addr
-                                        );
-                                        tokio::io::AsyncWriteExt::write_all(&mut stream, request.as_bytes()).await?;
-                                        let mut response_buf = [0u8; 1024];
-                                        let n = tokio::io::AsyncReadExt::read(&mut stream, &mut response_buf).await?;
-                                        let response_str = String::from_utf8_lossy(&response_buf[..n]);
+                                        path, addr
+                                    );
+                                    tokio::io::AsyncWriteExt::write_all(
+                                        &mut stream,
+                                        request.as_bytes(),
+                                    )
+                                    .await?;
+                                    let mut response_buf = [0u8; 1024];
+                                    let n = tokio::io::AsyncReadExt::read(
+                                        &mut stream,
+                                        &mut response_buf,
+                                    )
+                                    .await?;
+                                    let response_str = String::from_utf8_lossy(&response_buf[..n]);
 
-                                        if let Some(status_line) = response_str.lines().next() {
-                                            let parts: Vec<&str> = status_line.split_whitespace().collect();
-                                            if parts.len() >= 2 && (parts[0].starts_with("HTTP/1.1") || parts[0].starts_with("HTTP/1.0")) {
-                                                if let Ok(status_code) = parts[1].parse::<u16>() {
-                                                    Ok::<bool, std::io::Error>(status_code >= 200 && status_code < 400)
-                                                } else {
-                                                    Ok::<bool, std::io::Error>(false)
-                                                }
+                                    if let Some(status_line) = response_str.lines().next() {
+                                        let parts: Vec<&str> =
+                                            status_line.split_whitespace().collect();
+                                        if parts.len() >= 2
+                                            && (parts[0].starts_with("HTTP/1.1")
+                                                || parts[0].starts_with("HTTP/1.0"))
+                                        {
+                                            if let Ok(status_code) = parts[1].parse::<u16>() {
+                                                Ok::<bool, std::io::Error>(
+                                                    status_code >= 200 && status_code < 400,
+                                                )
                                             } else {
                                                 Ok::<bool, std::io::Error>(false)
                                             }
                                         } else {
                                             Ok::<bool, std::io::Error>(false)
                                         }
+                                    } else {
+                                        Ok::<bool, std::io::Error>(false)
                                     }
-                                ).await {
+                                })
+                                .await
+                                {
                                     Ok(Ok(healthy)) => healthy,
                                     _ => false,
                                 }
@@ -188,7 +208,8 @@ impl BackendPool {
                                     tokio::time::timeout(
                                         Duration::from_secs(1),
                                         tokio::net::TcpStream::connect(&addr)
-                                    ).await,
+                                    )
+                                    .await,
                                     Ok(Ok(_))
                                 )
                             }
