@@ -5,6 +5,13 @@ edition = "2024"
 description = "A lightweight, high-performance single-binary reverse proxy server."
 repository = "https://github.com/Jay-1409/oxygen"
 license = "MIT"
+exclude = [
+    "assets/*",
+    "utils/*",
+    "config.yaml",
+    "example.config.yaml",
+    "TODO.md"
+]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
