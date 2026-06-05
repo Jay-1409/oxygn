@@ -13,6 +13,7 @@
 
 Oxygen is a lightweight, high-performance single-binary reverse proxy server. It operates as a fast TCP tunnel that sits between your clients and backend services, allowing you to seamlessly manage traffic routing without complex setups. Oxygen exists to provide a simple, secure, and easily configurable proxy solution that protects your backend applications from overload while guaranteeing continuous availability.
 
+
 ## 🚀 Key Features
 
 * **Universal Protocol Support**: Routes raw TCP traffic directly.
@@ -178,6 +179,9 @@ backend:
       - 3002
       - 3003
 ```
+## 🏗️ Architecture
+
+![Architecture Diagram](assets/design.png)
 
 ## 🤝 Contributing
 
