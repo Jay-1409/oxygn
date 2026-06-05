@@ -58,51 +58,61 @@ Ensure you have the Rust toolchain installed.
 Oxygen is configured via a `config.yaml` file located in the directory where the binary is executed.
 
 ```yaml
-# 1. Oxygen server configuration
+# 1. Oxygen server configuration (Required block)
 oxygen:
   # The port on which the Oxygen proxy listens for incoming client requests.
+  # (Required)
   port: 8000
 
-# 2. Load Balancing configuration
+# 2. Load Balancing configuration (Required block)
 load_balancing:
   # The strategy used to route traffic between healthy backend servers.
   # Options: "round_robin" (alternates requests sequentially).
+  # (Optional, Default: "round_robin")
   strategy: "round_robin"
 
-# 3. Rate Limiting configuration
+# 3. Rate Limiting configuration (Required block)
 limiting:
   # The strategy used to enforce rate limits per client IP.
   # Options: 
+  #   - "no_limiting" (disables rate limiting)
   #   - "moka_counter" (fast, memory-budget-aware fixed window counter)
   #   - "basic_counter" (simple fixed window counter)
-  #   - "no_limiting" (disables rate limiting)
+  # (Optional, Default: "no_limiting")
   strategy: "moka_counter"
   
   # The maximum number of requests a single client IP can make within the window.
+  # (Required, must be provided as an integer even if strategy is "no_limiting")
   rate: 100
   
   # The length of the rate limiting time window in seconds.
+  # (Optional, Default: 1)
   window_secs: 60
   
   # The maximum memory footprint allowed for rate limiting data in megabytes (MB).
   # Prevents the proxy from consuming excessive RAM during high traffic.
+  # (Optional, Default: 100. Applicable only for "moka_counter" strategy)
   memory_budget_mb: 50
 
-# 4. Background Health Checking configuration
+# 4. Background Health Checking configuration (Optional block)
+# If this entire block is omitted, it defaults to checking via "tcp" every 2 seconds.
 health_check:
   # How often (in seconds) the proxy polls unhealthy servers to check if they are back online.
+  # (Optional, Default: 2)
   interval_secs: 2
   
   # The method used to verify server health.
   # Options:
   #   - "tcp" (checks if the server accepts TCP connections)
   #   - "http" (sends an HTTP GET request and expects a 200-399 status code)
+  # (Optional, Default: "tcp")
   check_type: "tcp"
   
   # The endpoint path to query (applicable only when check_type is "http").
+  # (Optional, Default: "/health")
   path: "/health"
 
-# 5. Backend Pool configuration
+# 5. Backend Pool configuration (Required block)
 # Defines the list of backend servers that Oxygen will proxy traffic to.
 backend:
   # The IP address or hostname of the physical backend machine.
