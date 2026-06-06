@@ -1,36 +1,54 @@
 use tokio::net::TcpListener;
-use tokio::io::AsyncReadExt;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+// Fixed HTTP/1.1 response — pre-built as bytes so there's zero allocation per request.
+const RESPONSE: &[u8] = b"HTTP/1.1 200 OK\r\n\
+    Content-Type: text/plain\r\n\
+    Content-Length: 2\r\n\
+    Connection: keep-alive\r\n\
+    \r\n\
+    OK";
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>>{
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     let port = args.get(1).map(|s| s.as_str()).unwrap_or("8080");
     let addr = format!("0.0.0.0:{}", port);
     let listener = TcpListener::bind(&addr).await?;
-    println!("Echo server listening on {}", addr);
+    println!("Echo HTTP backend listening on {}", addr);
+
     loop {
-        let (mut socket, addr) = listener.accept().await?;
-        println!("Accepted connection from: {}", addr);
+        let (mut socket, _) = listener.accept().await?;
         tokio::spawn(async move {
-            let mut buf = [0;1024];
+            let mut buf = vec![0u8; 4096];
+
+            // Each iteration handles one HTTP request on a keep-alive connection.
             loop {
-                match socket.read(&mut buf).await {
-                    Ok(0) => break, 
+                let mut received = 0;
 
-                    Ok(n) => {
-                        if let Err(e) = socket.write_all(&buf[..n]).await {
-                            eprintln!("failed to write to the socket; err = {:?}", e);
-                            break;
+                // Read until we have a complete request header (\r\n\r\n).
+                loop {
+                    match socket.read(&mut buf[received..]).await {
+                        Ok(0) => return, // Client closed connection.
+                        Ok(n) => {
+                            received += n;
+                            // Check for end-of-headers marker.
+                            if buf[..received].windows(4).any(|w| w == b"\r\n\r\n") {
+                                break;
+                            }
+                            if received >= buf.len() {
+                                break; // Buffer full — respond anyway.
+                            }
                         }
+                        Err(_) => return,
                     }
+                }
 
-                    Err(e) => {
-                        eprintln!("failed to read from socket; err = {:?}", e);
-                        break;
-                    }
+                // Send the pre-built HTTP response.
+                if socket.write_all(RESPONSE).await.is_err() {
+                    return;
                 }
             }
         });
     }
-    Ok(())
 }

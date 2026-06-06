@@ -71,7 +71,6 @@ impl Listener {
                         return; 
                     }
                 };
-                println!("Routing connection: {} -> {}", client_addr, backend_addr);
                 let mut backend_stream = match TcpStream::connect(&backend_addr).await {
                     Ok(stream) => stream,
                     Err(e) => {

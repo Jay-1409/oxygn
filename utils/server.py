@@ -1,5 +1,5 @@
 import sys
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -20,7 +20,7 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
 def run(port):
     server_address = ('127.0.0.1', port)
-    httpd = HTTPServer(server_address, HealthCheckHandler)
+    httpd = ThreadingHTTPServer(server_address, HealthCheckHandler)
     print(f"Starting python backend server on 127.0.0.1:{port}...")
     try:
         httpd.serve_forever()

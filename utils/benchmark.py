@@ -13,16 +13,17 @@ DATA_FILE = "assets/benchmark_data.json"
 def run_wrk():
     print("🚀 Firing the wrk load test on localhost... (Wait 30 seconds)")
     try:
+        # BUG FIX 3: Removed check=True — wrk can exit non-zero when connections fail,
+        # which caused CalledProcessError to be raised and all results to be silently
+        # discarded (returning ""), producing all-zero benchmark numbers.
         result = subprocess.run(
             ["wrk", "-t4", "-c200", "-d30s", "http://127.0.0.1:8000/"],
             capture_output=True,
             text=True,
-            check=True
         )
+        if result.returncode != 0:
+            print(f"⚠️  wrk exited with code {result.returncode}. stderr: {result.stderr.strip()}")
         return result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Error running wrk: {e.output}")
-        return ""
     except FileNotFoundError:
         print("❌ 'wrk' command not found! Please make sure it is installed (e.g. brew install wrk).")
         return ""
@@ -160,21 +161,92 @@ def draw_graphs(data):
     
     print("\n✅ All 6 Graphs successfully saved to the assets/ folder!")
 
+def wait_for_server(host="127.0.0.1", port=8000, timeout=30):
+    """Actively poll until the server is accepting TCP connections, or timeout."""
+    import socket
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            with socket.create_connection((host, port), timeout=1):
+                return True
+        except OSError:
+            time.sleep(0.25)
+    return False
+
+BACKEND_PORTS = [8080, 8081, 8082]
+
+def start_backends():
+    """Start three local echo HTTP backend instances on ports 8080/8081/8082."""
+    print("🖥️  Starting Rust echo backend servers on ports 8080, 8081, 8082...")
+    procs = []
+    for port in BACKEND_PORTS:
+        p = subprocess.Popen(
+            ["./target/release/examples/echo", str(port)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        procs.append(p)
+    # Wait until all backends are reachable
+    for port in BACKEND_PORTS:
+        if not wait_for_server(port=port, timeout=10):
+            print(f"⚠️  Backend on port {port} did not start in time.")
+    print("✅ All backends ready.")
+    return procs
+
+def stop_backends(procs):
+    """Terminate all backend server processes."""
+    for p in procs:
+        p.terminate()
+        try:
+            p.wait(timeout=3)
+        except:
+            p.kill()
+    print("🛑 Backend servers stopped.")
+
 def run_benchmark_for_target(target, data):
     print(f"\n{'='*60}")
     print(f"🎯 STARTING BENCHMARK FOR: {target.upper()}")
     print(f"{'='*60}")
     
-    data[target] = {"rps": 0, "latency": "", "transfer_mbps": 0, "errors": 0, "memory_mb": [], "cpu_percent": []}
+    # BUG FIX 4: Changed initial "latency" value from "" (str) to 0.0 (float)
+    # for type consistency — a stray string would crash numeric comparisons.
+    data[target] = {"rps": 0, "latency": 0.0, "transfer_mbps": 0, "errors": 0, "memory_mb": [], "cpu_percent": []}
+
+    # Start backend servers that both proxies will route traffic to
+    backend_procs = start_backends()
     
     print(f"🔄 Booting up {target} proxy...")
     if target == "oxygn":
-        proc = subprocess.Popen(["cargo", "run", "--release"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # BUG FIX 1 & 2: Previously used `cargo run --release` which:
+        #   (a) compiles first — 3-second sleep was far too short, so wrk fired
+        #       before the server was alive, causing 0 RPS and ~2M socket errors.
+        #   (b) made proc.pid point to the *cargo* compiler process, not the
+        #       actual server binary — CPU/memory metrics were measuring the
+        #       compiler, not the server.
+        # Fix: build once up front, then launch the compiled binary directly so
+        # proc.pid IS the server, and startup is near-instant.
+        print("🔨 Building oxygn release binary (this may take a moment)...")
+        build_result = subprocess.run(
+            ["cargo", "build", "--release"],
+            capture_output=True, text=True
+        )
+        if build_result.returncode != 0:
+            print(f"❌ cargo build failed:\n{build_result.stderr}")
+            stop_backends(backend_procs)
+            return
+        proc = subprocess.Popen(["./target/release/oxygn"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
         nginx_conf = os.path.abspath("utils/nginx.conf")
         proc = subprocess.Popen(["nginx", "-c", nginx_conf, "-g", "daemon off;"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        
-    time.sleep(3) # Wait for it to bind ports
+    
+    # BUG FIX 2: Replaced blind time.sleep(3) with an active TCP readiness check.
+    # The old sleep was arbitrary and had no guarantee the server was listening,
+    # especially if compilation was still in progress.
+    print(f"⏳ Waiting for {target} to start accepting connections...")
+    if not wait_for_server():
+        print(f"❌ {target} did not become ready within 30 seconds. Aborting.")
+        proc.terminate()
+        stop_backends(backend_procs)
+        return
     
     stop_recording = False
     
@@ -208,6 +280,8 @@ def run_benchmark_for_target(target, data):
     if target == "nginx":
         os.system("pkill nginx > /dev/null 2>&1")
         time.sleep(1)
+
+    stop_backends(backend_procs)
     
     rps, latency, transfer, errors = parse_wrk_output(output)
     print(f"\n📊 Extracted Results for {target}:")
@@ -224,6 +298,17 @@ def run_benchmark_for_target(target, data):
 def main():
     if not os.path.exists("assets"):
         os.makedirs("assets")
+
+    # Build the Rust echo backend example once before running any benchmarks.
+    print("🔨 Building Rust echo backend (examples/echo.rs)...")
+    build_result = subprocess.run(
+        ["cargo", "build", "--example", "echo", "--release"],
+        capture_output=True, text=True
+    )
+    if build_result.returncode != 0:
+        print(f"❌ Failed to build echo backend:\n{build_result.stderr}")
+        return
+    print("✅ Echo backend built successfully.\n")
         
     data = {}
     

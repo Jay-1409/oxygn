@@ -193,6 +193,52 @@ Contributions are welcome! Please feel free to submit a Pull Request. (Check TOD
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## 📊 Benchmarks
+
+> Benchmarks were run on localhost with Oxygen and nginx both configured as **TCP stream proxies** (Layer 4), routing to the same pool of 3 Rust async HTTP backends to ensure a fair, apples-to-apples comparison.
+
+### Test Environment
+
+| Parameter | Value |
+|---|---|
+| **Tool** | [`wrk`](https://github.com/wg/wrk) |
+| **Duration** | 30 seconds |
+| **Threads** | 4 |
+| **Connections** | 200 concurrent |
+| **Target** | `http://127.0.0.1:8000/` |
+| **Backends** | 3 × Tokio async HTTP servers (`127.0.0.1:8080/8081/8082`) |
+| **Nginx mode** | `stream {}` (TCP proxy) |
+| **Oxygen mode** | `copy_bidirectional` TCP tunnel |
+
+### Results Summary
+
+| Metric | Oxygen | Nginx |
+|---|---|---|
+| **Requests/sec** | 70,774 | 75,204 |
+| **Avg Latency** | 2.9 ms | 2.7 ms |
+| **Transfer Rate** | 6.16 MB/s | 6.54 MB/s |
+| **Socket Errors** | 0 | 0 |
+
+> Oxygen achieves **~94% of nginx's throughput** while being a single-binary Rust application with a fraction of the configuration complexity.
+
+### Throughput (Higher is Better)
+
+![RPS Benchmark](assets/benchmark_rps.png)
+
+### Latency (Lower is Better)
+
+![Latency Benchmark](assets/benchmark_latency.png)
+
+### Transfer Rate (Higher is Better)
+
+![Transfer Benchmark](assets/benchmark_transfer.png)
+
+### Memory Usage Over Time (Lower is Better)
+
+![Memory Benchmark](assets/benchmark_memory.png)
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

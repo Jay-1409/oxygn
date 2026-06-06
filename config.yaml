@@ -1,5 +1,5 @@
 backend:
-  - backend_host: "192.168.1.7"
+  - backend_host: "127.0.0.1"
     ports:
       - 8080
       - 8081
