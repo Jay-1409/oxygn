@@ -1,13 +1,10 @@
 backend:
-  - backend_host: "192.168.1.11"
-    ports:
-      - 8080
-      - 8081
-  - backend_host: "192.168.1.13"
+  - backend_host: "192.168.1.7"
     ports:
       - 8080
       - 8081
       - 8082
+
 
 limiting:
   strategy: "no_limiting"
