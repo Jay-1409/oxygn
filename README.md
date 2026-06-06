@@ -2,7 +2,7 @@
   <img src="assets/logo.svg" alt="Oxygen Logo" width="200" />
 </p>
 
-# Oxygen
+# Oxygn
 
 > Let your servers breathe, let your clients breathe, all via a simple configuration file.
 
