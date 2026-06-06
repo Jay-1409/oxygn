@@ -10,4 +10,3 @@
     - if you enable this then the healthy check poller might fail, check EDGE CASES in `pool.rs`
 
     
-

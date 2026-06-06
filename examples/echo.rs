@@ -5,7 +5,7 @@ use tokio::io::AsyncWriteExt;
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
     let args: Vec<String> = std::env::args().collect();
     let port = args.get(1).map(|s| s.as_str()).unwrap_or("8080");
-    let addr = format!("127.0.0.1:{}", port);
+    let addr = format!("0.0.0.0:{}", port);
     let listener = TcpListener::bind(&addr).await?;
     println!("Echo server listening on {}", addr);
     loop {
