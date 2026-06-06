@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Oxygen Logo" width="200" />
+  <img src="assets/logo.svg" alt="oxygn Logo" width="200" />
 </p>
 
 # Oxygn
@@ -11,7 +11,7 @@
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![Language](https://img.shields.io/badge/language-Rust-orange)
 
-Oxygn is a lightweight, high-performance single-binary reverse proxy server. It operates as a fast TCP tunnel that sits between your clients and backend services, allowing you to seamlessly manage traffic routing without complex setups. Oxygen exists to provide a simple, secure, and easily configurable proxy solution that protects your backend applications from overload while guaranteeing continuous availability.
+Oxygn is a lightweight, high-performance single-binary reverse proxy server. It operates as a fast TCP tunnel that sits between your clients and backend services, allowing you to seamlessly manage traffic routing without complex setups. oxygn exists to provide a simple, secure, and easily configurable proxy solution that protects your backend applications from overload while guaranteeing continuous availability.
 
 
 ## 🚀 Key Features
@@ -38,17 +38,17 @@ Ensure you have the Rust toolchain installed.
 ### Installation
 
 **Option 1: Using Cargo (Recommended)**
-If you have the Rust toolchain installed, you can install Oxygen directly from crates.io:
+If you have the Rust toolchain installed, you can install oxygn directly from crates.io:
 ```bash
 cargo install oxygn
 ```
-*(Note: The package name is `oxygn`, but the binary installed is `oxygen`)*
+*(Note: The package name is `oxygn`, but the binary installed is `oxygn`)*
 
 **Option 2: Build from Source**
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/Jay-1409/oxygen.git
-   cd oxygen
+   git clone https://github.com/Jay-1409/oxygn.git
+   cd oxygn
    ```
 
 2. **Build**:
@@ -56,13 +56,13 @@ cargo install oxygn
    cargo build --release
    ```
 
-### Running Oxygen
+### Running oxygn
 
 1. **Configure your Proxy**:
-   Oxygen requires a `config.yaml` file in the directory where you execute it. 
+   oxygn requires a `config.yaml` file in the directory where you execute it. 
    ```bash
    # If you installed via cargo, download the example config:
-   curl -o config.yaml https://raw.githubusercontent.com/Jay-1409/oxygen/main/example.config.yaml
+   curl -o config.yaml https://raw.githubusercontent.com/Jay-1409/oxygn/main/example.config.yaml
    
    # Or if you cloned the repository:
    cp example.config.yaml config.yaml
@@ -71,7 +71,7 @@ cargo install oxygn
 2. **Start the Proxy**:
    ```bash
    # If you installed via cargo:
-   oxygen
+   oxygn
    
    # If running from source:
    cargo run --release
@@ -79,12 +79,12 @@ cargo install oxygn
 
 ## 🛠️ Configuration Reference
 
-Oxygen is configured via a `config.yaml` file located in the directory where the binary is executed.
+oxygn is configured via a `config.yaml` file located in the directory where the binary is executed.
 
 ```yaml
-# 1. Oxygen server configuration (Required block)
-oxygen:
-  # The port on which the Oxygen proxy listens for incoming client requests.
+# 1. oxygn server configuration (Required block)
+oxygn:
+  # The port on which the oxygn proxy listens for incoming client requests.
   # (Required)
   port: 8000
 
@@ -137,7 +137,7 @@ health_check:
   path: "/health"
 
 # 5. Backend Pool configuration (Required block)
-# Defines the list of backend servers that Oxygen will proxy traffic to.
+# Defines the list of backend servers that oxygn will proxy traffic to.
 backend:
   # The IP address or hostname of the physical backend machine.
   - backend_host: "127.0.0.1"
@@ -152,10 +152,10 @@ backend:
 
 ### Example: Proxying a Node.js Web App
 
-Suppose you have three Node.js processes running locally on ports `3001`, `3002`, and `3003`. You want Oxygen to expose them on port `80`, balance traffic evenly, and ensure no client IP makes more than 50 requests per minute.
+Suppose you have three Node.js processes running locally on ports `3001`, `3002`, and `3003`. You want oxygn to expose them on port `80`, balance traffic evenly, and ensure no client IP makes more than 50 requests per minute.
 
 ```yaml
-oxygen:
+oxygn:
   port: 80
 
 load_balancing:
@@ -195,7 +195,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. (Check TOD
 
 ## 📊 Benchmarks
 
-> Benchmarks were run on localhost with Oxygen and nginx both configured as **TCP stream proxies** (Layer 4), routing to the same pool of 3 Rust async HTTP backends to ensure a fair, apples-to-apples comparison.
+> Benchmarks were run on localhost with oxygn and nginx both configured as **TCP stream proxies** (Layer 4), routing to the same pool of 3 Rust async HTTP backends to ensure a fair, apples-to-apples comparison.
 
 ### Test Environment
 
@@ -208,18 +208,18 @@ Contributions are welcome! Please feel free to submit a Pull Request. (Check TOD
 | **Target** | `http://127.0.0.1:8000/` |
 | **Backends** | 3 × Tokio async HTTP servers (`127.0.0.1:8080/8081/8082`) |
 | **Nginx mode** | `stream {}` (TCP proxy) |
-| **Oxygen mode** | `copy_bidirectional` TCP tunnel |
+| **oxygn mode** | `copy_bidirectional` TCP tunnel |
 
 ### Results Summary
 
-| Metric | Oxygen | Nginx |
+| Metric | oxygn | Nginx |
 |---|---|---|
 | **Requests/sec** | 70,774 | 75,204 |
 | **Avg Latency** | 2.9 ms | 2.7 ms |
 | **Transfer Rate** | 6.16 MB/s | 6.54 MB/s |
 | **Socket Errors** | 0 | 0 |
 
-> Oxygen achieves **~94% of nginx's throughput** while being a single-binary Rust application with a fraction of the configuration complexity.
+> oxygn achieves **~94% of nginx's throughput** while being a single-binary Rust application with a fraction of the configuration complexity.
 
 ### Throughput (Higher is Better)
 
