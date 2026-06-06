@@ -11,7 +11,7 @@
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![Language](https://img.shields.io/badge/language-Rust-orange)
 
-Oxygen is a lightweight, high-performance single-binary reverse proxy server. It operates as a fast TCP tunnel that sits between your clients and backend services, allowing you to seamlessly manage traffic routing without complex setups. Oxygen exists to provide a simple, secure, and easily configurable proxy solution that protects your backend applications from overload while guaranteeing continuous availability.
+Oxygn is a lightweight, high-performance single-binary reverse proxy server. It operates as a fast TCP tunnel that sits between your clients and backend services, allowing you to seamlessly manage traffic routing without complex setups. Oxygen exists to provide a simple, secure, and easily configurable proxy solution that protects your backend applications from overload while guaranteeing continuous availability.
 
 
 ## 🚀 Key Features
