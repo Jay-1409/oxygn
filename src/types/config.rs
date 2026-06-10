@@ -8,6 +8,8 @@ pub struct Config {
     pub oxygen: Oxygen,
     #[serde(default)]
     pub health_check: HealthCheck,
+    #[serde(default)]
+    pub networking: Networking,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -84,6 +86,24 @@ fn default_health_check_type() -> String {
 
 fn default_health_check_path() -> String {
     "/health".to_string()
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Networking {
+    #[serde(default = "default_tcp_nodelay")]
+    pub tcp_nodelay: bool,
+}
+
+impl Default for Networking {
+    fn default() -> Self {
+        Self {
+            tcp_nodelay: default_tcp_nodelay(),
+        }
+    }
+}
+
+fn default_tcp_nodelay() -> bool {
+    true
 }
 
 pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {

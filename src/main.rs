@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = config::load_config()?;
     let pool = BackendPool::init(&config);
     pool.spawn_health_pooler(&config.health_check);
-    let listener = Listener::init(config.oxygen.port, pool);
+    let listener = Listener::init(config.oxygen.port, pool, config.networking.tcp_nodelay);
     println!("Loaded config successfully:\n{:#?}", config);
     listener.run().await?;    
     Ok(())
