@@ -18,3 +18,4 @@ serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 mini-moka = "0.10"
 tokio = { version = "1.52.3", features = ["full"] }
+socket2 = { version = "0.5", features = ["all"] }

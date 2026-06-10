@@ -1,5 +1,6 @@
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
+use std::net::SocketAddr;
 use crate::strategies::limiting::{LimitingStrategy, LimitingStrategyFactory};
 use crate::strategies::routing::{self, RoutingStrategy};
 use crate::types::Backend;
@@ -24,10 +25,16 @@ impl BackendPool {
         for b_config in &config.backend {
             let host = &b_config.backend_host;
             for port in &b_config.ports {
+                // Pre-compute the SocketAddr once at startup so the hot path
+                // never needs format!() or string parsing per connection.
+                let addr: SocketAddr = format!("{}:{}", host, port)
+                    .parse()
+                    .expect("Invalid backend address in config");
                 backends.push(Backend {
                     host: host.to_string(),
                     port: *port,
                     health: true,
+                    addr,
                 });
             }
         }
@@ -57,13 +64,11 @@ impl BackendPool {
         Implements the stategy of next backedn choice, according to the startegy used, in runtine,
         essentially delegates this task to startgy.rs
     */
-    pub fn next_backend(&self) -> Option<String> {
+    /// Returns the pre-computed SocketAddr of the next healthy backend.
+    /// Zero allocations on the hot path.
+    pub fn next_backend(&self) -> Option<SocketAddr> {
         let backends = self.backends.read().unwrap();
-        if let Some(backend) = self.strategy.next(&backends) {
-            Some(format!("{}:{}", backend.host, backend.port))
-        } else {
-            None
-        }
+        self.strategy.next(&backends).map(|b| b.addr)
     }
 
     /*
@@ -92,14 +97,10 @@ impl BackendPool {
     }
 
     /*
-        Marks the backend unhealthy by its address string (e.g. "127.0.0.1:8080")
+        Marks the backend unhealthy by its SocketAddr.
     */
-    pub fn mark_unhealthy_by_addr(&self, addr: &str) {
-        if let Some((host, port_str)) = addr.split_once(':') {
-            if let Ok(port) = port_str.parse::<u16>() {
-                self.mark_unhealthy(host, port);
-            }
-        }
+    pub fn mark_unhealthy_by_addr(&self, addr: std::net::SocketAddr) {
+        self.mark_unhealthy(&addr.ip().to_string(), addr.port());
     }
 
     /*

@@ -1,6 +1,8 @@
 # Below are some ideas that i find cool , to implement
 
 - Make web visulization using some rust based web library and ultimatly WASM
+
+
 - Enable the config to be updated in runtime 
     - Probably spawn a tokio process to pooll the config using hashes, and check for a changein hash 
         - Can be computationally heavy  
@@ -9,4 +11,5 @@
 
     - if you enable this then the healthy check poller might fail, check EDGE CASES in `pool.rs`
 
-    
+
+- implement a logger for logging, replace print!
