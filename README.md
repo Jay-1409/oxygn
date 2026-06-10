@@ -136,8 +136,15 @@ health_check:
   # (Optional, Default: "/health")
   path: "/health"
 
-# 5. Backend Pool configuration (Required block)
-# Defines the list of backend servers that oxygn will proxy traffic to.
+# 5. Networking configuration (Optional block)
+networking:
+  # Whether to use TCP_NODELAY (disables Nagle's algorithm) to forward packets immediately.
+  # Set this to true for low-latency routing, or false to buffer packet chunks.
+  # (Optional, Default: true)
+  tcp_nodelay: true
+
+# 6. Backend Pool configuration (Required block)
+# Defines the list of backend servers that Oxygen will proxy traffic to.
 backend:
   # The IP address or hostname of the physical backend machine.
   - backend_host: "127.0.0.1"
