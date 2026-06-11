@@ -1,3 +1,9 @@
+// Copyright (c) 2026 Jay 'jay-1409' Shah. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+//
+// File: src/strategies/limiting.rs
+// Purpose: Implements rate limiting strategies (Moka counter, basic counter, no-limiting).
+
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};

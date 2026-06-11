@@ -1,3 +1,9 @@
+// Copyright (c) 2026 Jay 'jay-1409' Shah. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+//
+// File: src/managers/pool.rs
+// Purpose: Manages backend pool selection, health checking, and health status polling.
+
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use std::net::SocketAddr;

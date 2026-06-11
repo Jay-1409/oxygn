@@ -1,3 +1,9 @@
+// Copyright (c) 2026 Jay 'jay-1409' Shah. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+//
+// File: src/network/listner.rs
+// Purpose: Handles high-concurrency client accept loops with SO_REUSEPORT.
+
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io;
 use std::net::SocketAddr;

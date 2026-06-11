@@ -1,3 +1,9 @@
+// Copyright (c) 2026 Jay 'jay-1409' Shah. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+//
+// File: src/types/mod.rs
+// Purpose: Declares types module and defines backend structures.
+
 pub mod config;
 
 use std::net::SocketAddr;

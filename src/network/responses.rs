@@ -1,3 +1,9 @@
+// Copyright (c) 2026 Jay 'jay-1409' Shah. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+//
+// File: src/network/responses.rs
+// Purpose: Helper functions for sending raw HTTP responses (e.g., 429 Too Many Requests, 503 Service Unavailable).
+
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 

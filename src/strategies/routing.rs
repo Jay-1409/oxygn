@@ -1,3 +1,9 @@
+// Copyright (c) 2026 Jay 'jay-1409' Shah. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+//
+// File: src/strategies/routing.rs
+// Purpose: Implements routing / load balancing strategies (Round Robin).
+
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use crate::types::Backend;

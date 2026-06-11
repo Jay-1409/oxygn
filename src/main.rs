@@ -1,3 +1,9 @@
+// Copyright (c) 2026 Jay 'jay-1409' Shah. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+//
+// File: src/main.rs
+// Purpose: Application entry point. Loads configuration and runs the proxy server.
+
 pub mod types;
 pub mod strategies;
 pub mod managers;
