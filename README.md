@@ -6,7 +6,7 @@
 
 > Let your servers breathe, let your clients breathe, all via a simple configuration file.
 
-![License](https://img.shields.io/badge/license-MIT-blue)
+![License](https://img.shields.io/badge/license-Apache2.0-blue)
 
 - Oxygn is a lightweight, high-performance single-binary reverse proxy server. 
 
